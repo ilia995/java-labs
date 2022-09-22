@@ -4,7 +4,6 @@ import java.util.Scanner;
 public class Main {
     public static Scanner sc = new Scanner(System.in, "cp1251");
     public static Team[] teams; // declaring an array of Team objects
-    public static Team foundTeam = null; // for storing found team
     public static void fillTeamInfo(int number){ // filling in information about the teams
         teams = new Team[number];
         for(int i = 0; i < number; i++){
@@ -64,37 +63,40 @@ public class Main {
             }
         }
     }
-    public static void findTeam(){ // searching for a team by name
-        System.out.print("\nFind team: ");
-        String toFind = sc.nextLine();
-        for (Team team : teams) {
-            if (team.name.equalsIgnoreCase(toFind)){
-                foundTeam = team;
-                return;
+    public static Team findTeam(){ // searching for a team by name
+        while (true){
+            System.out.print("\nFind team: ");
+            String toFind = sc.nextLine();
+            for (Team team : teams) {
+                if (team.name.equalsIgnoreCase(toFind)){
+                    return team;
+                }
+            }
+            if (tryAgain("Team not found")){
+                return null;
             }
         }
     }
-    public static void printFoundTeam(){ // print the found team
-        if (foundTeam == null){
-            System.out.println("No team found with this name. Exiting...");
-            return;
-        }
+    public static void printFoundTeam(Team foundTeam){ // print the found team
         System.out.println("\nTeam found: ");
         System.out.format("Name: %s,\tcity: %s,\trating: %d,\twins: %d%n",
                 foundTeam.name, foundTeam.city, foundTeam.rating, foundTeam.wins);
     }
-    public static void changeFieldAndPrint(){ // change a field of the team
-        if (foundTeam == null){
-            return;
-        }
-        System.out.print("\nEnter field to change: ");
-        String fieldToChange = sc.nextLine().toLowerCase().trim();
+    public static void changeFieldAndPrint(Team foundTeam){ // change a field of the team
         Field field;
-        try{
-            field = foundTeam.getClass().getField(fieldToChange);
-        }catch(NoSuchFieldException e){
-            System.out.println("There is no field '" + fieldToChange + "'. Exiting...");
-            return;
+        String fieldToChange;
+        while (true){
+            System.out.print("\nEnter field to change: ");
+            fieldToChange = sc.nextLine().trim();
+            try{
+                field = foundTeam.getClass().getField(fieldToChange);
+                break;
+            }catch(NoSuchFieldException e){
+                if(tryAgain("There is no field '" + fieldToChange + "'")){
+                    System.out.println("Exiting...");
+                    return;
+                }
+            }
         }
         try{
             if (fieldToChange.equalsIgnoreCase("rating") ||
@@ -113,7 +115,7 @@ public class Main {
                 foundTeam.name, foundTeam.city, foundTeam.rating, foundTeam.wins);
         System.out.println("Exiting...");
     }
-
+    
     public static void main(String[] args){
         fillTeamInfo(getInt("Enter the number of teams"));
         printTeamInfo("Stored team information");
@@ -121,9 +123,13 @@ public class Main {
         printBetterThanAverageTeams();
         sortDescending();
         printTeamInfo("Sorted by wins");
-        findTeam();
-        printFoundTeam();
-        changeFieldAndPrint();
+        Team foundTeam = findTeam();
+        if (foundTeam != null){
+            printFoundTeam(foundTeam);
+            changeFieldAndPrint(foundTeam);
+        }else{
+            System.out.println("Exiting...");
+        }
     }
     public static int getInt(String s){
         while (true) {
@@ -134,5 +140,9 @@ public class Main {
                 System.out.print("Expecting a number. ");
             }
         }
+    }
+    public static boolean tryAgain(String s){
+        System.out.print(s + ". Try again? [Y/n]: ");
+        return sc.nextLine().equalsIgnoreCase("n");
     }
 }
